@@ -6,4 +6,19 @@
 CAP_PLUGIN(jdudpPlugin, "jdudp",
            CAP_PLUGIN_METHOD(echo, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(searchCams, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(create, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(update, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(setPaused, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(bind, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(close, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(getInfo, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(getSockets, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(send, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(setBroadcast, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(joinGroup, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(leaveGroup, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(getJoinedGroups, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(closeAllSockets, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(setMulticastTimeToLive, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(setMulticastLoopbackMode, CAPPluginReturnPromise);
 )
