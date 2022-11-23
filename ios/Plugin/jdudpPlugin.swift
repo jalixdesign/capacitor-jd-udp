@@ -116,7 +116,9 @@ public class jdudpPlugin: CAPPlugin {
         let port = call.getInt("port") ?? -1
         let socket = sockets[socketId]
         let dataString = call.getString("buffer") ?? ""
-        let data = Data(base64Encoded: dataString, options: .ignoreUnknownCharacters) ?? Data.init()
+        //let data = Data(base64Encoded: dataString, options: .ignoreUnknownCharacters) ?? Data.init()
+        let data = Data([0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFA, 0x05, 0x00, 0x00, 0x00, 0x00]) ?? Data.init()
+
         if(socket == nil || port < 0 || address == "") {
             call.error("Invalid Argument")
             return
@@ -303,7 +305,7 @@ public class jdudpPlugin: CAPPlugin {
     
     
     private class UdpSocket:NSObject, GCDAsyncUdpSocketDelegate {
-        private weak var plugin:UdpPlugin?
+        private weak var plugin:jdudpPlugin?
         let socketId:Int
         private var name:String
         private var bufferSize:NSNumber
@@ -313,7 +315,7 @@ public class jdudpPlugin: CAPPlugin {
         var isBound:Bool
         var multicastGroup: Set<String>
 
-        init(plugin:UdpPlugin, id: Int, properties: [String:Any]?) {
+        init(plugin:jdudpPlugin, id: Int, properties: [String:Any]?) {
             self.socketId = id
             self.plugin = plugin
             self.bufferSize = 4096
