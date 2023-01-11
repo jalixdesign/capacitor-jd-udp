@@ -163,6 +163,16 @@ export class jdudpWeb extends WebPlugin implements jdudpPlugin {
     return ret;
   }
 
+  async startRtspStream(options: { ipadress: string, password: string, channel: string, stream: string }): Promise<{}>{
+    console.log('Nicht in Webversion');
+    console.log(options);
+    const ret = 'test';
+    return ret;
+  }
 
-
+  async stopRtspStream(): Promise<{}>{
+    console.log('Nicht in Webversion');
+    const ret = 'test';
+    return ret;
+  }
 }

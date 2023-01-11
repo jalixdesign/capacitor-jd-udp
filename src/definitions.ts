@@ -37,4 +37,9 @@ export interface jdudpPlugin {
   addListener(events: "receive", functions: (params: { socketId: number, buffer: string }) => void): PluginListenerHandle;
 
   addListener(events: "receiveError", functions: (params: string) => void): PluginListenerHandle;
+
+  startRtspStream(options: { ipadress: string, password: string, channel: string, stream: string }): Promise<{}>;
+
+  stopRtspStream(): Promise<{}>;
+
 }

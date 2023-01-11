@@ -37,6 +37,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.net.*;
 import java.util.*;
 
+import com.arthenica.ffmpegkit.FFmpegSession;
+import com.arthenica.ffmpegkit.FFmpegSessionCompleteCallback;
+import com.arthenica.ffmpegkit.LogCallback;
+import com.arthenica.ffmpegkit.ReturnCode;
+import com.arthenica.ffmpegkit.SessionState;
+import com.arthenica.ffmpegkit.Statistics;
+import com.arthenica.ffmpegkit.StatisticsCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -47,10 +54,14 @@ import com.getcapacitor.PluginMethod;
 
 import org.json.JSONException;
 
+//ffmpeg
+import com.arthenica.ffmpegkit.FFmpegKit;
+
 @CapacitorPlugin(name = "jdudp")
 public class jdudpPlugin extends Plugin {
 
     private jdudp implementation = new jdudp();
+    private Boolean streamRunningHasSend = false;
 
     @PluginMethod
     public void echo(PluginCall call) {
@@ -343,6 +354,79 @@ public class jdudpPlugin extends Plugin {
       }
     }
 
+    /*ffmpeg methodes start*/
+    @PluginMethod()
+    public void startRtspStream(PluginCall call) {
+      try {
+        File dir = new File(getContext().getCacheDir(), "rtspcache");
+        if(!dir.exists()){
+            dir.mkdir();
+        }
+        String path = dir.getAbsolutePath();
+        String indexfile = path + "/index.m3u8";
+        String ipadress = call.getString("ipadress");
+        String password = call.getString("password");
+        String channel = call.getString("channel");
+        String stream = call.getString("stream");
+
+        streamRunningHasSend = false;
+
+        JSObject ret = new JSObject();
+        ret.put("path", indexfile);  
+
+        FFmpegKit.executeAsync("-fflags nobuffer -rtsp_transport tcp -i rtsp://" + ipadress + ":554/user=admin_password=" + password + "_channel=" + channel + "_stream=" + stream + ".sdp?real_stream -fps_mode passthrough -copyts -vcodec copy -movflags frag_keyframe+empty_moov -an -hls_flags delete_segments+append_list -f hls -preset ultrafast -tune zerolatency -segment_list_flags live -hls_time 0.5 -hls_list_size 6 -segment_format mpegts -hls_base_url http://localhost/_capacitor_file_" + path + "/ -hls_segment_filename " + path + "/%d.ts " + path + "/index.m3u8", new FFmpegSessionCompleteCallback() {
+          @Override
+          public void apply(FFmpegSession session) {
+            SessionState state = session.getState();
+            ReturnCode returnCode = session.getReturnCode();
+      
+            // CALLED WHEN SESSION IS EXECUTED
+            Log.d(LOG_TAG, String.format("FFmpeg process exited with state %s and rc %s.%s", state, returnCode, session.getFailStackTrace()));
+            ret.put("status", "beendet");
+            call.success(ret);
+          }
+        }, new LogCallback() {
+          @Override
+          public void apply(com.arthenica.ffmpegkit.Log log) {
+            String logMessage = log.getMessage();
+            String search = "index.m3u8.tmp' for writing";
+            Log.d(LOG_TAG, logMessage);
+            if ( streamRunningHasSend == false && logMessage.toUpperCase().contains(search.toUpperCase()) ) {
+              streamRunningHasSend = true;
+              ret.put("status", "running");
+              call.success(ret);
+            }
+            // CALLED WHEN SESSION PRINTS LOGS
+          }
+        }, new StatisticsCallback() {
+          @Override
+          public void apply(Statistics statistics) {
+            //Log.d(LOG_TAG, "FFmpeg generates 2 statistics");
+            Log.d(LOG_TAG, statistics.toString());
+            // CALLED WHEN SESSION GENERATES STATISTICS
+          }
+        });
+
+        
+        //call.success(ret);
+      } catch (Exception e) {
+          call.error(e.getMessage());
+      }
+    }
+
+    @PluginMethod()
+    public void stopRtspStream(PluginCall call) {
+      try {
+        FFmpegKit.cancel();
+
+        //JSObject ret = new JSObject();
+        //ret.put("erfolgreich", "true");
+        call.success();
+      } catch (Exception e) {
+          call.error(e.getMessage());
+      }
+    }
+    /*ffmpeg methodes start*/
 
     private void sendReceiveErrorEvent(int code, String message) {
       JSObject error = new JSObject();

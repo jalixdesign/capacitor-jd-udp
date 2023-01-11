@@ -302,6 +302,14 @@ public class jdudpPlugin: CAPPlugin {
         }
         call.success(["groups":groupArray])
     }
+
+    @objc func startRtspStream(_ call: CAPPluginCall) {
+        call.success()
+    }
+
+    @objc func stopRtspStream(_ call: CAPPluginCall) {
+        call.success()
+    }
     
     
     private class UdpSocket:NSObject, GCDAsyncUdpSocketDelegate {

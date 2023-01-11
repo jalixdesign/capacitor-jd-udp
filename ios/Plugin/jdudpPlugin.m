@@ -21,4 +21,6 @@ CAP_PLUGIN(jdudpPlugin, "jdudp",
            CAP_PLUGIN_METHOD(closeAllSockets, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(setMulticastTimeToLive, CAPPluginReturnPromise);
            CAP_PLUGIN_METHOD(setMulticastLoopbackMode, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(startRtspStream, CAPPluginReturnPromise);
+           CAP_PLUGIN_METHOD(stopRtspStream, CAPPluginReturnPromise);
 )
