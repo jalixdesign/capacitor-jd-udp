@@ -1,6 +1,6 @@
 {
   "name": "capacitor-jd-udp",
-  "version": "0.0.31",
+  "version": "0.0.32",
   "description": "Capacitor plugin to send individual UDP requests. Has been developed for a special application and is not intended for reuse.",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",

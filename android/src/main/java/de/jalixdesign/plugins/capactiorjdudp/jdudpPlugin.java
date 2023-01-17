@@ -360,7 +360,15 @@ public class jdudpPlugin extends Plugin {
       try {
         File dir = new File(getContext().getCacheDir(), "rtspcache");
         if(!dir.exists()){
-            dir.mkdir();
+          dir.mkdir();
+        }else{
+          String[] myFiles;
+
+          myFiles = dir.list();
+          for (int i=0; i<myFiles.length; i++) {
+            File myFile = new File(dir, myFiles[i]);
+            myFile.delete();
+          }
         }
         String path = dir.getAbsolutePath();
         String indexfile = path + "/index.m3u8";
