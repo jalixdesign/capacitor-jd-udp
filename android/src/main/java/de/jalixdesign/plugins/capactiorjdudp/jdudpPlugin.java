@@ -5,12 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import android.util.Log;
 import android.util.Base64;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,17 +36,18 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.net.*;
 import java.util.*;
 
+import com.arthenica.ffmpegkit.FFmpegKitConfig;
 import com.arthenica.ffmpegkit.FFmpegSession;
 import com.arthenica.ffmpegkit.FFmpegSessionCompleteCallback;
 import com.arthenica.ffmpegkit.LogCallback;
 import com.arthenica.ffmpegkit.ReturnCode;
+import com.arthenica.ffmpegkit.Session;
 import com.arthenica.ffmpegkit.SessionState;
 import com.arthenica.ffmpegkit.Statistics;
 import com.arthenica.ffmpegkit.StatisticsCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
-import com.getcapacitor.NativePlugin;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
@@ -56,6 +56,7 @@ import org.json.JSONException;
 
 //ffmpeg
 import com.arthenica.ffmpegkit.FFmpegKit;
+
 
 @CapacitorPlugin(name = "jdudp")
 public class jdudpPlugin extends Plugin {
@@ -371,8 +372,12 @@ public class jdudpPlugin extends Plugin {
           }
         }
         String path = dir.getAbsolutePath();
-        String indexfile = path + "/index.m3u8";
-        String ipadress = call.getString("ipadress");
+
+        Long tsLong = System.currentTimeMillis()/1000;
+        String ts = tsLong.toString();
+
+        String indexFile = path + "/index_" + ts + ".m3u8";
+        String ipAddress = call.getString("ipadress");
         String password = call.getString("password");
         String channel = call.getString("channel");
         String stream = call.getString("stream");
@@ -380,9 +385,9 @@ public class jdudpPlugin extends Plugin {
         streamRunningHasSend = false;
 
         JSObject ret = new JSObject();
-        ret.put("path", indexfile);  
+        ret.put("path", indexFile);
 
-        FFmpegKit.executeAsync("-fflags nobuffer -rtsp_transport tcp -i rtsp://" + ipadress + ":554/user=admin_password=" + password + "_channel=" + channel + "_stream=" + stream + ".sdp?real_stream -fps_mode passthrough -copyts -vcodec copy -movflags frag_keyframe+empty_moov -an -hls_flags delete_segments+append_list -f hls -preset ultrafast -tune zerolatency -segment_list_flags live -hls_time 0.5 -hls_list_size 6 -segment_format mpegts -hls_base_url http://localhost/_capacitor_file_" + path + "/ -hls_segment_filename " + path + "/%d.ts " + path + "/index.m3u8", new FFmpegSessionCompleteCallback() {
+        FFmpegKit.executeAsync("-fflags nobuffer -rtsp_transport tcp  -probesize 3200 -analyzeduration 0 -i rtsp://" + ipAddress + ":554/user=admin_password=" + password + "_channel=" + channel + "_stream=" + stream + ".sdp?real_stream -fps_mode passthrough -copyts -vcodec copy -movflags frag_keyframe+empty_moov -an -hls_flags delete_segments+append_list -f hls -preset ultrafast -tune zerolatency -segment_list_flags live -hls_time 0.5 -hls_list_size 6 -segment_format mpegts -hls_base_url http://localhost/_capacitor_file_" + path + "/ -hls_segment_filename " + path + "/" + ts + "_%d.ts " + indexFile, new FFmpegSessionCompleteCallback() {
           @Override
           public void apply(FFmpegSession session) {
             SessionState state = session.getState();
@@ -397,7 +402,7 @@ public class jdudpPlugin extends Plugin {
           @Override
           public void apply(com.arthenica.ffmpegkit.Log log) {
             String logMessage = log.getMessage();
-            String search = "index.m3u8.tmp' for writing";
+            String search = "m3u8.tmp' for writing";
             Log.d(LOG_TAG, logMessage);
             if ( streamRunningHasSend == false && logMessage.toUpperCase().contains(search.toUpperCase()) ) {
               streamRunningHasSend = true;
@@ -425,7 +430,12 @@ public class jdudpPlugin extends Plugin {
     @PluginMethod()
     public void stopRtspStream(PluginCall call) {
       try {
-        FFmpegKit.cancel();
+        List<Session> sessions = FFmpegKitConfig.getSessions();
+        for (int i = 0; i < sessions.size(); i++) {
+          Session session = sessions.get(i);
+          Long sessionId = session.getSessionId();
+          FFmpegKit.cancel(sessionId);
+        }
 
         //JSObject ret = new JSObject();
         //ret.put("erfolgreich", "true");
