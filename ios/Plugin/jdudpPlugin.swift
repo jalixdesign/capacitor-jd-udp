@@ -315,24 +315,24 @@ public class jdudpPlugin: CAPPlugin {
               create: false
           ).appendingPathComponent("rtspcache")
         } catch {
-          print("Error TryCatch get Path \(error)")
+          NSLog("Error TryCatch get Path %@", error)
           pathObj = URL(fileURLWithPath: "file://path/to/directory/egal.pdf")
         }
 
         var path = pathObj.path
 
-        print("path \(path)") 
+        NSLog("path %@", path) 
 
         var isDir:ObjCBool = true
         if !FileManager.default.fileExists(atPath: path, isDirectory: &isDir) {
-          print("rtspcache Ordner nicht vorhanden, erstellen...")
+          NSLog("rtspcache Ordner nicht vorhanden, erstellen...")
           do {
             try FileManager.default.createDirectory(at: pathObj, withIntermediateDirectories: true)
           } catch {
-            print("Error TryCatch get Path \(error)")
+            NSLog("Error TryCatch get Path %@", error)
           }
         }else{
-          print("rtspcache Ordner vorhanden, TODO: Dateien löschen");
+          NSLog("rtspcache Ordner vorhanden, TODO: Dateien löschen");
         }
 
         let ts = NSDate().timeIntervalSince1970;
@@ -349,35 +349,41 @@ public class jdudpPlugin: CAPPlugin {
         let hls_base_url = "http://localhost/_capacitor_file_" + path + "/"
         let command = "-fflags nobuffer -rtsp_transport tcp  -probesize 3200 -analyzeduration 0 -i " + rtspURL + " -fps_mode passthrough -copyts -vcodec copy -movflags frag_keyframe+empty_moov -an -hls_flags delete_segments+append_list -f hls -preset ultrafast -tune zerolatency -segment_list_flags live -hls_time 0.5 -hls_list_size 6 -segment_format mpegts -hls_base_url " + hls_base_url + " -hls_segment_filename " + hls_segment_filename + " " + indexFile
 
-        print("ffmpeg command \(command)");
+        var ret = [
+          "path": indexFile
+        ]
+
+        NSLog("ffmpeg command %@", command);
 
         var streamRunningHasSend = false
 
         FFmpegKit.executeAsync(command) { session in
           guard let session = session else {
-              print("!! Invalid session")
+              NSLog("!! Invalid session")
               return
           }
           guard let returnCode = session.getReturnCode() else {
-              print("!! Invalid return code")
+              NSLog("!! Invalid return code")
               return
           }
 
-          print("FFmpeg process exited with state \(FFmpegKitConfig.sessionState(toString: session.getState()) ?? "Unknown") and rc \(returnCode).\(session.getFailStackTrace() ?? "Unknown")")
-          call.success(["status": "beendet"])
+          NSLog("FFmpeg process exited with state %@ and rc %@ - %@", FFmpegKitConfig.sessionState(toString: session.getState()), returnCode, session.getFailStackTrace())
+          ret["status"] = "beendet"
+          call.success(ret)
         } withLogCallback: { logs in
           guard let logs = logs else { return }
           var logMessage = logs.getMessage()!;
           var search = "m3u8.tmp' for writing"
-          print("withLogCallback \(logMessage)")
+          NSLog("withLogCallback %@", logMessage)
           if streamRunningHasSend == false && logMessage.contains(search) {
             streamRunningHasSend = true
-            call.success(["status": "running"])
+            ret["status"] = "running"
+            call.success(ret)
           }
           // CALLED WHEN SESSION PRINTS LOGS
         } withStatisticsCallback: { stats in
           guard let stats = stats else { return }
-          print("withStatisticsCallback \(stats)")
+          NSLog("withStatisticsCallback %@",stats)
           // CALLED WHEN SESSION GENERATES STATISTICS
         }
 
