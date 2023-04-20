@@ -1,7 +1,7 @@
 import Foundation
 import Capacitor
 import CocoaAsyncSocket
-import ffmpegkit
+import ffmpeg-kit-ios-full
 
 /**
  * Please read the Capacitor iOS Plugin Development Guide
