@@ -306,27 +306,32 @@ public class jdudpPlugin: CAPPlugin {
 
     @objc func startRtspStream(_ call: CAPPluginCall) {
 
+        var pathObj
         do {
-          let pathObj = FileManager.default.url(
+          pathObj = try FileManager.default.url(
               for: .documentDirectory,
               in: .userDomainMask,
               appropriateFor: nil,
               create: false
           ).appendingPathComponent("rtspcache")
         } catch {
-          NSLog("Error TryCatch get Path %@", error);
+          print("Error TryCatch get Path \(error)")
         }
 
         let path = pathObj.path
 
-        NSLog("path %@", path);
+        print("path \(path)") 
 
         var isDir:ObjCBool = true
         if !FileManager.default.fileExists(atPath: pathObj, isDirectory: &isDir) {
-          NSLog("rtspcache Ordner nicht vorhanden, erstellen...");
-          FileManager.default.createDirectory(at: pathObj, withIntermediateDirectories: true)
+          print("rtspcache Ordner nicht vorhanden, erstellen...")
+          do {
+            try FileManager.default.createDirectory(at: pathObj, withIntermediateDirectories: true)
+          } catch {
+            print("Error TryCatch get Path \(error)")
+          }
         }else{
-          NSLog("rtspcache Ordner vorhanden, TODO: Dateien löschen");
+          print("rtspcache Ordner vorhanden, TODO: Dateien löschen");
         }
 
         let ts = NSDate().timeIntervalSince1970;
@@ -340,7 +345,7 @@ public class jdudpPlugin: CAPPlugin {
 
         let command = "-fflags nobuffer -rtsp_transport tcp  -probesize 3200 -analyzeduration 0 -i rtsp://" + ipAddress + ":554/user=admin_password=" + password + "_channel=" + channel + "_stream=" + stream + ".sdp?real_stream -fps_mode passthrough -copyts -vcodec copy -movflags frag_keyframe+empty_moov -an -hls_flags delete_segments+append_list -f hls -preset ultrafast -tune zerolatency -segment_list_flags live -hls_time 0.5 -hls_list_size 6 -segment_format mpegts -hls_base_url http://localhost/_capacitor_file_" + path + "/ -hls_segment_filename " + path + "/" + ts + "_%d.ts " + indexFile
 
-        NSLog("ffmpeg command %@", command);
+        print("ffmpeg command \(command)");
 
         FFmpegKit.executeAsync(command) { session in
           guard let session = session else {
@@ -354,11 +359,12 @@ public class jdudpPlugin: CAPPlugin {
           print("FFmpeg process exited with state \(FFmpegKitConfig.sessionState(toString: session.getState()) ?? "Unknown") and rc \(returnCode).\(session.getFailStackTrace() ?? "Unknown")")
         } withLogCallback: { logs in
           guard let logs = logs else { return }
-          NSLog("withLogCallback %@", logs.getMessage());
+          var logMessage = logs.getMessage();
+          print("withLogCallback \(logMessage)")
           // CALLED WHEN SESSION PRINTS LOGS
         } withStatisticsCallback: { stats in
           guard let stats = stats else { return }
-          NSLog("withStatisticsCallback %@", stats);
+          print("withStatisticsCallback \(stats)")
           // CALLED WHEN SESSION GENERATES STATISTICS
         }
 
