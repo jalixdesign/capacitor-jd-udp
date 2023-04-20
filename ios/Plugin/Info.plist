@@ -20,5 +20,11 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSPrincipalClass</key>
 	<string></string>
+  <key>NSLocalNetworkUsageDescription</key>
+	<string>Um auf die Kameras in deinem WLAN zuzugreifen.</string>
+  <key>NSBonjourServices</key>
+  <array>
+    <string>_lnp._tcp.</string>
+  </array>
 </dict>
 </plist>

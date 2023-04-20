@@ -306,6 +306,11 @@ public class jdudpPlugin: CAPPlugin {
 
     @objc func startRtspStream(_ call: CAPPluginCall) {
 
+        NSLog("Check local Network Permission")
+        LocalNetworkPrivacy().checkAccessState { granted in
+          NSLog("Check local Network Permission - Response: %@", granted)
+        }
+
         var pathObj: URL
         do {
           pathObj = try FileManager.default.url(
@@ -315,7 +320,7 @@ public class jdudpPlugin: CAPPlugin {
               create: false
           ).appendingPathComponent("rtspcache")
         } catch {
-          NSLog("Error TryCatch get Path %@", error)
+          NSLog("Error TryCatch get Path %@", error.localizedDescription)
           pathObj = URL(fileURLWithPath: "file://path/to/directory/egal.pdf")
         }
 
@@ -329,7 +334,7 @@ public class jdudpPlugin: CAPPlugin {
           do {
             try FileManager.default.createDirectory(at: pathObj, withIntermediateDirectories: true)
           } catch {
-            NSLog("Error TryCatch get Path %@", error)
+            NSLog("Error TryCatch get Path %@", error.localizedDescription)
           }
         }else{
           NSLog("rtspcache Ordner vorhanden, TODO: Dateien löschen");
@@ -346,7 +351,7 @@ public class jdudpPlugin: CAPPlugin {
 
         let rtspURL = "rtsp://" + ipAddress + ":554/user=admin_password=" + password + "_channel=" + channel + "_stream=" + stream + ".sdp?real_stream"
         let hls_segment_filename = path + "/" + String(ts) + "_%d.ts"
-        let hls_base_url = "http://localhost/_capacitor_file_" + path + "/"
+        let hls_base_url = "capacitor://localhost/_capacitor_file_" + path + "/"
         let command = "-fflags nobuffer -rtsp_transport tcp  -probesize 3200 -analyzeduration 0 -i " + rtspURL + " -fps_mode passthrough -copyts -vcodec copy -movflags frag_keyframe+empty_moov -an -hls_flags delete_segments+append_list -f hls -preset ultrafast -tune zerolatency -segment_list_flags live -hls_time 0.5 -hls_list_size 6 -segment_format mpegts -hls_base_url " + hls_base_url + " -hls_segment_filename " + hls_segment_filename + " " + indexFile
 
         var ret = [
@@ -367,7 +372,9 @@ public class jdudpPlugin: CAPPlugin {
               return
           }
 
-          NSLog("FFmpeg process exited with state %@ and rc %@ - %@", FFmpegKitConfig.sessionState(toString: session.getState()), returnCode, session.getFailStackTrace())
+          NSLog("FFmpeg process exited 1: %@", FFmpegKitConfig.sessionState(toString: session.getState()))
+          NSLog("FFmpeg process exited 2: %@", returnCode.description ?? "Unknown")
+          NSLog("FFmpeg process exited 3: %@", session.getFailStackTrace() ?? "Unknown")
           ret["status"] = "beendet"
           call.success(ret)
         } withLogCallback: { logs in
@@ -391,13 +398,12 @@ public class jdudpPlugin: CAPPlugin {
     }
 
     @objc func stopRtspStream(_ call: CAPPluginCall) {
-      /*sessions = FFmpegKitConfig.getSessions()
-      for i in 0...sessions.size() {
-        session = sessions.get(i)
-        sessionId = session.getSessionId()
+      var sessions = FFmpegKitConfig.getSessions()
+      for session in sessions ?? [] {
+        var sessionId = session.getSessionId()
         FFmpegKit.cancel(sessionId)
       }
-      call.success()*/
+      call.success()
     }
     
     
