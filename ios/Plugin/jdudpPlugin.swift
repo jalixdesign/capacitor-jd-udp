@@ -316,6 +316,7 @@ public class jdudpPlugin: CAPPlugin {
           ).appendingPathComponent("rtspcache")
         } catch {
           print("Error TryCatch get Path \(error)")
+          pathObj = URL(fileURLWithPath: "file://path/to/directory/egal.pdf")
         }
 
         var path = pathObj.path
@@ -344,11 +345,13 @@ public class jdudpPlugin: CAPPlugin {
         let stream = call.getString("stream") ?? ""
 
         let rtspURL = "rtsp://" + ipAddress + ":554/user=admin_password=" + password + "_channel=" + channel + "_stream=" + stream + ".sdp?real_stream"
-        let hls_segment_filename = path + "/" + ts + "_%d.ts"
+        let hls_segment_filename = path + "/" + String(ts) + "_%d.ts"
         let hls_base_url = "http://localhost/_capacitor_file_" + path + "/"
         let command = "-fflags nobuffer -rtsp_transport tcp  -probesize 3200 -analyzeduration 0 -i " + rtspURL + " -fps_mode passthrough -copyts -vcodec copy -movflags frag_keyframe+empty_moov -an -hls_flags delete_segments+append_list -f hls -preset ultrafast -tune zerolatency -segment_list_flags live -hls_time 0.5 -hls_list_size 6 -segment_format mpegts -hls_base_url " + hls_base_url + " -hls_segment_filename " + hls_segment_filename + " " + indexFile
 
         print("ffmpeg command \(command)");
+
+        var streamRunningHasSend = false
 
         FFmpegKit.executeAsync(command) { session in
           guard let session = session else {
@@ -359,11 +362,18 @@ public class jdudpPlugin: CAPPlugin {
               print("!! Invalid return code")
               return
           }
+
           print("FFmpeg process exited with state \(FFmpegKitConfig.sessionState(toString: session.getState()) ?? "Unknown") and rc \(returnCode).\(session.getFailStackTrace() ?? "Unknown")")
+          call.success(["status": "beendet"])
         } withLogCallback: { logs in
           guard let logs = logs else { return }
-          var logMessage = logs.getMessage();
+          var logMessage = logs.getMessage()!;
+          var search = "m3u8.tmp' for writing"
           print("withLogCallback \(logMessage)")
+          if streamRunningHasSend == false && logMessage.contains(search) {
+            streamRunningHasSend = true
+            call.success(["status": "running"])
+          }
           // CALLED WHEN SESSION PRINTS LOGS
         } withStatisticsCallback: { stats in
           guard let stats = stats else { return }
@@ -375,13 +385,13 @@ public class jdudpPlugin: CAPPlugin {
     }
 
     @objc func stopRtspStream(_ call: CAPPluginCall) {
-      sessions = FFmpegKitConfig.getSessions()
+      /*sessions = FFmpegKitConfig.getSessions()
       for i in 0...sessions.size() {
         session = sessions.get(i)
         sessionId = session.getSessionId()
         FFmpegKit.cancel(sessionId)
       }
-      call.success()
+      call.success()*/
     }
     
     
