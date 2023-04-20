@@ -1,7 +1,7 @@
 import Foundation
 import Capacitor
 import CocoaAsyncSocket
-#include <ffmpegkit/FFmpegKit.h>
+import ffmpegkit
 
 /**
  * Please read the Capacitor iOS Plugin Development Guide
@@ -313,7 +313,7 @@ public class jdudpPlugin: CAPPlugin {
             create: false
         )[0].appendingPathComponent("rtspcache").path
 
-        NSLog(@"path %@", path);
+        NSLog("path %@", path);
 
         if !FileManager.default.fileExists(atPath: path, isDirectory: &isDir) {
           NSLog("rtspcache Ordner nicht vorhanden, erstellen...");
@@ -333,27 +333,29 @@ public class jdudpPlugin: CAPPlugin {
 
         let command = "-fflags nobuffer -rtsp_transport tcp  -probesize 3200 -analyzeduration 0 -i rtsp://" + ipAddress + ":554/user=admin_password=" + password + "_channel=" + channel + "_stream=" + stream + ".sdp?real_stream -fps_mode passthrough -copyts -vcodec copy -movflags frag_keyframe+empty_moov -an -hls_flags delete_segments+append_list -f hls -preset ultrafast -tune zerolatency -segment_list_flags live -hls_time 0.5 -hls_list_size 6 -segment_format mpegts -hls_base_url http://localhost/_capacitor_file_" + path + "/ -hls_segment_filename " + path + "/" + ts + "_%d.ts " + indexFile
 
-        NSLog(@"ffmpeg command %@", command);
+        NSLog("ffmpeg command %@", command);
 
-        FFmpegSession* session = [FFmpegKit executeAsync:@command withCompleteCallback:^(FFmpegSession* session){
-            SessionState state = [session getState];
-            ReturnCode *returnCode = [session getReturnCode];
+        FFmpegKit.executeAsync(command) { session in
+          guard let session = session else {
+              print("!! Invalid session")
+              return
+          }
+          guard let returnCode = session.getReturnCode() else {
+              print("!! Invalid return code")
+              return
+          }
+          print("FFmpeg process exited with state \(FFmpegKitConfig.sessionState(toString: session.getState()) ?? "Unknown") and rc \(returnCode).\(session.getFailStackTrace() ?? "Unknown")")
+        } withLogCallback: { logs in
+          guard let logs = logs else { return }
+          NSLog("withLogCallback %@", logs.getMessage());
+          // CALLED WHEN SESSION PRINTS LOGS
+        } withStatisticsCallback: { stats in
+          guard let stats = stats else { return }
+          NSLog("withStatisticsCallback %@", String(stats));
+          // CALLED WHEN SESSION GENERATES STATISTICS
+        }
 
-            // CALLED WHEN SESSION IS EXECUTED
-
-            NSLog(@"FFmpeg process exited with state %@ and rc %@.%@", [FFmpegKitConfig sessionStateToString:state], returnCode, [session getFailStackTrace]);
-
-        } withLogCallback:^(Log *log) {
-
-            // CALLED WHEN SESSION PRINTS LOGS
-            NSLog(log);
-
-        } withStatisticsCallback:^(Statistics *statistics) {
-
-            // CALLED WHEN SESSION GENERATES STATISTICS
-
-        }];
-        call.success()
+        //call.success()
     }
 
     @objc func stopRtspStream(_ call: CAPPluginCall) {
