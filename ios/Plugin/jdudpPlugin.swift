@@ -306,7 +306,7 @@ public class jdudpPlugin: CAPPlugin {
 
     @objc func startRtspStream(_ call: CAPPluginCall) {
 
-        var pathObj
+        var pathObj: URL
         do {
           pathObj = try FileManager.default.url(
               for: .documentDirectory,
@@ -318,12 +318,12 @@ public class jdudpPlugin: CAPPlugin {
           print("Error TryCatch get Path \(error)")
         }
 
-        let path = pathObj.path
+        var path = pathObj.path
 
         print("path \(path)") 
 
         var isDir:ObjCBool = true
-        if !FileManager.default.fileExists(atPath: pathObj, isDirectory: &isDir) {
+        if !FileManager.default.fileExists(atPath: path, isDirectory: &isDir) {
           print("rtspcache Ordner nicht vorhanden, erstellen...")
           do {
             try FileManager.default.createDirectory(at: pathObj, withIntermediateDirectories: true)
@@ -343,7 +343,10 @@ public class jdudpPlugin: CAPPlugin {
         let channel = call.getString("channel") ?? ""
         let stream = call.getString("stream") ?? ""
 
-        let command = "-fflags nobuffer -rtsp_transport tcp  -probesize 3200 -analyzeduration 0 -i rtsp://" + ipAddress + ":554/user=admin_password=" + password + "_channel=" + channel + "_stream=" + stream + ".sdp?real_stream -fps_mode passthrough -copyts -vcodec copy -movflags frag_keyframe+empty_moov -an -hls_flags delete_segments+append_list -f hls -preset ultrafast -tune zerolatency -segment_list_flags live -hls_time 0.5 -hls_list_size 6 -segment_format mpegts -hls_base_url http://localhost/_capacitor_file_" + path + "/ -hls_segment_filename " + path + "/" + ts + "_%d.ts " + indexFile
+        let rtspURL = "rtsp://" + ipAddress + ":554/user=admin_password=" + password + "_channel=" + channel + "_stream=" + stream + ".sdp?real_stream"
+        let hls_segment_filename = path + "/" + ts + "_%d.ts"
+        let hls_base_url = "http://localhost/_capacitor_file_" + path + "/"
+        let command = "-fflags nobuffer -rtsp_transport tcp  -probesize 3200 -analyzeduration 0 -i " + rtspURL + " -fps_mode passthrough -copyts -vcodec copy -movflags frag_keyframe+empty_moov -an -hls_flags delete_segments+append_list -f hls -preset ultrafast -tune zerolatency -segment_list_flags live -hls_time 0.5 -hls_list_size 6 -segment_format mpegts -hls_base_url " + hls_base_url + " -hls_segment_filename " + hls_segment_filename + " " + indexFile
 
         print("ffmpeg command \(command)");
 
@@ -372,7 +375,13 @@ public class jdudpPlugin: CAPPlugin {
     }
 
     @objc func stopRtspStream(_ call: CAPPluginCall) {
-        call.success()
+      sessions = FFmpegKitConfig.getSessions()
+      for i in 0...sessions.size() {
+        session = sessions.get(i)
+        sessionId = session.getSessionId()
+        FFmpegKit.cancel(sessionId)
+      }
+      call.success()
     }
     
     
