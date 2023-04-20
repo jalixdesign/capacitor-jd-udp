@@ -306,18 +306,25 @@ public class jdudpPlugin: CAPPlugin {
 
     @objc func startRtspStream(_ call: CAPPluginCall) {
 
-        let path = try FileManager.default.url(
-            for: .documentDirectory,
-            in: .userDomainMask,
-            appropriateFor: nil,
-            create: false
-        )[0].appendingPathComponent("rtspcache").path
+        do {
+          let pathObj = FileManager.default.url(
+              for: .documentDirectory,
+              in: .userDomainMask,
+              appropriateFor: nil,
+              create: false
+          ).appendingPathComponent("rtspcache")
+        } catch {
+          NSLog("Error TryCatch get Path %@", error);
+        }
+
+        let path = pathObj.path
 
         NSLog("path %@", path);
 
-        if !FileManager.default.fileExists(atPath: path, isDirectory: &isDir) {
+        var isDir:ObjCBool = true
+        if !FileManager.default.fileExists(atPath: pathObj, isDirectory: &isDir) {
           NSLog("rtspcache Ordner nicht vorhanden, erstellen...");
-          try FileManager.default.createDirectory(at: path, withIntermediateDirectories: true)
+          FileManager.default.createDirectory(at: pathObj, withIntermediateDirectories: true)
         }else{
           NSLog("rtspcache Ordner vorhanden, TODO: Dateien löschen");
         }
@@ -351,7 +358,7 @@ public class jdudpPlugin: CAPPlugin {
           // CALLED WHEN SESSION PRINTS LOGS
         } withStatisticsCallback: { stats in
           guard let stats = stats else { return }
-          NSLog("withStatisticsCallback %@", String(stats));
+          NSLog("withStatisticsCallback %@", stats);
           // CALLED WHEN SESSION GENERATES STATISTICS
         }
 
