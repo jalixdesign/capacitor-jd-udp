@@ -400,7 +400,8 @@ public class jdudpPlugin: CAPPlugin {
     @objc func stopRtspStream(_ call: CAPPluginCall) {
       var sessions = FFmpegKitConfig.getSessions()
       for session in sessions ?? [] {
-        var sessionId = session.getSessionId()
+        var castedSession = session as! Session
+        var sessionId = castedSession.getId()
         FFmpegKit.cancel(sessionId)
       }
       call.success()
