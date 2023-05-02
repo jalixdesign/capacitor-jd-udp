@@ -38,6 +38,7 @@ class LocalNetworkPrivacy : NSObject {
 }
 
 extension LocalNetworkPrivacy : NetServiceDelegate {
+    
     func netServiceDidPublish(_ sender: NetService) {
         timer?.invalidate()
         completion?(true)

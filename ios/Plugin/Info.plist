@@ -25,6 +25,8 @@
   <key>NSBonjourServices</key>
   <array>
     <string>_lnp._tcp.</string>
+    <string>_bonjour._tcp</string>
+    <string>_myitem._tcp</string>
   </array>
 </dict>
 </plist>

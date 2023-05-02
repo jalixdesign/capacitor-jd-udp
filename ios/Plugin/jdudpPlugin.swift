@@ -306,10 +306,17 @@ public class jdudpPlugin: CAPPlugin {
 
     @objc func startRtspStream(_ call: CAPPluginCall) {
 
-        NSLog("Check local Network Permission")
-        LocalNetworkPrivacy().checkAccessState { granted in
-          NSLog("Check local Network Permission - Response: %@", granted)
+        /*NSLog("Check local Network Permission Before")
+        if #available(iOS 14.0, *) {
+          NSLog("Check local Network Permission 2")
+          LocalNetworkPrivacy().checkAccessState { granted in
+            NSLog("Check local Network Permission 3")
+            NSLog("Check local Network Permission - Response: %@", granted)
+          }
+        }else{
+          NSLog("Kleiner iOS 14, LocalNetwork immer moeglich")
         }
+        NSLog("Check local Network Permission After")*/
 
         var pathObj: URL
         do {
@@ -352,7 +359,7 @@ public class jdudpPlugin: CAPPlugin {
         let rtspURL = "rtsp://" + ipAddress + ":554/user=admin_password=" + password + "_channel=" + channel + "_stream=" + stream + ".sdp?real_stream"
         let hls_segment_filename = path + "/" + String(ts) + "_%d.ts"
         let hls_base_url = "capacitor://localhost/_capacitor_file_" + path + "/"
-        let command = "-fflags nobuffer -rtsp_transport tcp  -probesize 3200 -analyzeduration 0 -i " + rtspURL + " -fps_mode passthrough -copyts -vcodec copy -movflags frag_keyframe+empty_moov -an -hls_flags delete_segments+append_list -f hls -preset ultrafast -tune zerolatency -segment_list_flags live -hls_time 0.5 -hls_list_size 6 -segment_format mpegts -hls_base_url " + hls_base_url + " -hls_segment_filename " + hls_segment_filename + " " + indexFile
+        let command = "-fflags nobuffer -rtsp_transport tcp -probesize 3200 -analyzeduration 0 -i " + rtspURL + " -fps_mode passthrough -copyts -vcodec copy -movflags frag_keyframe+empty_moov -an -hls_flags delete_segments+append_list -f hls -preset ultrafast -tune zerolatency -segment_list_flags live -hls_time 0.5 -hls_list_size 6 -segment_format mpegts -hls_base_url " + hls_base_url + " -hls_segment_filename " + hls_segment_filename + " " + indexFile
 
         var ret = [
           "path": indexFile
@@ -375,16 +382,21 @@ public class jdudpPlugin: CAPPlugin {
           NSLog("FFmpeg process exited 1: %@", FFmpegKitConfig.sessionState(toString: session.getState()))
           NSLog("FFmpeg process exited 2: %@", returnCode.description ?? "Unknown")
           NSLog("FFmpeg process exited 3: %@", session.getFailStackTrace() ?? "Unknown")
-          ret["status"] = "beendet"
-          call.success(ret)
+          //ret["status"] = "beendet"
+          //call.success(ret)
         } withLogCallback: { logs in
           guard let logs = logs else { return }
           var logMessage = logs.getMessage()!;
-          var search = "m3u8.tmp' for writing"
           NSLog("withLogCallback %@", logMessage)
-          if streamRunningHasSend == false && logMessage.contains(search) {
+
+          if streamRunningHasSend == false && logMessage.contains("m3u8.tmp' for writing") {
             streamRunningHasSend = true
             ret["status"] = "running"
+            call.success(ret)
+          }
+
+          if streamRunningHasSend == false && logMessage.contains("No route to host") {
+            ret["status"] = "noroutetohost"
             call.success(ret)
           }
           // CALLED WHEN SESSION PRINTS LOGS
