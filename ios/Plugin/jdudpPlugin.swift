@@ -359,7 +359,7 @@ public class jdudpPlugin: CAPPlugin {
         let rtspURL = "rtsp://" + ipAddress + ":554/user=admin_password=" + password + "_channel=" + channel + "_stream=" + stream + ".sdp?real_stream"
         let hls_segment_filename = path + "/" + String(ts) + "_%d.ts"
         let hls_base_url = "capacitor://localhost/_capacitor_file_" + path + "/"
-        let command = "-fflags nobuffer -rtsp_transport tcp -probesize 3200 -analyzeduration 0 -i " + rtspURL + " -fps_mode passthrough -copyts -vcodec copy -movflags frag_keyframe+empty_moov -an -hls_flags delete_segments+append_list -f hls -preset ultrafast -tune zerolatency -segment_list_flags live -hls_time 0.5 -hls_list_size 6 -segment_format mpegts -hls_base_url " + hls_base_url + " -hls_segment_filename " + hls_segment_filename + " " + indexFile
+        let command = "-fflags nobuffer -rtsp_transport tcp -probesize 3200 -analyzeduration 0 -i " + rtspURL + " -fps_mode passthrough -copyts -vcodec copy -movflags frag_keyframe+empty_moov -an -hls_flags delete_segments+append_list -f hls -preset veryfast -tune zerolatency -segment_list_flags live -hls_time 0.5 -hls_list_size 6 -segment_format mpegts -hls_base_url " + hls_base_url + " -hls_segment_filename " + hls_segment_filename + " " + indexFile
 
         var ret = [
           "path": indexFile
