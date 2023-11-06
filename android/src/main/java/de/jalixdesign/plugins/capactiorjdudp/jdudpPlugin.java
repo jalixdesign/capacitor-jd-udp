@@ -746,10 +746,10 @@ public class jdudpPlugin extends Plugin {
 
       void setProperties(JSObject properties) throws JSONException, SocketException {
 
-          if (!properties.isNull("name"))
+          if ( properties != null && !properties.isNull("name"))
               name = properties.getString("name");
 
-          if (!properties.isNull("bufferSize")) {
+          if ( properties != null && !properties.isNull("bufferSize")) {
               bufferSize = properties.getInt("bufferSize");
               setBufferSize();
           }
