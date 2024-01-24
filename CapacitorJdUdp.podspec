@@ -14,6 +14,6 @@ Pod::Spec.new do |s|
   s.ios.deployment_target  = '13.0'
   s.dependency 'Capacitor'
   s.dependency 'CocoaAsyncSocket'
-  s.dependency 'ffmpeg-kit-ios-full', '~> 5.1'
+  #s.dependency 'ffmpeg-kit-ios-full', '~> 5.1'
   s.swift_version = '5.1'
 end
